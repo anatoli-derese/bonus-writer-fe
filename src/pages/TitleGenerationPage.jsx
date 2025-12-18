@@ -128,84 +128,106 @@ export const TitleGenerationPage = () => {
     }
   };
 
+  const handleBackToForm = () => {
+    dispatch(clearTitles());
+    setLocalError('');
+    dispatch(clearError());
+  };
+
   const displayError = localError || error || generationError;
+  const hasTitles = titles.length > 0;
 
   return (
     <div className="title-generation-container">
       <div className="title-generation-card">
-        <div className="page-header">
-          <h1>Generate Titles</h1>
-          <p>Enter book details to generate chapter or bonus titles</p>
-        </div>
-
-        <form onSubmit={handleSubmit} className="title-form">
-          {displayError && (
-            <div className="error-message" role="alert">
-              {displayError}
+        {!hasTitles ? (
+          <>
+            <div className="page-header">
+              <h1>Generate Titles</h1>
+              <p>Enter book details to generate chapter or bonus titles</p>
             </div>
-          )}
 
-          <div className="form-group">
-            <label htmlFor="title">
-              Book Title <span className="required">*</span>
-            </label>
-            <input
-              id="title"
-              type="text"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              placeholder="Enter the book title"
-              disabled={isLoading}
-              autoComplete="off"
-              autoFocus
-            />
-          </div>
+            <form onSubmit={handleSubmit} className="title-form">
+              {displayError && (
+                <div className="error-message" role="alert">
+                  {displayError}
+                </div>
+              )}
 
-          <div className="form-group">
-            <label htmlFor="tableOfContents">Table of Contents (Optional)</label>
-            <textarea
-              id="tableOfContents"
-              value={tableOfContents}
-              onChange={(e) => setTableOfContents(e.target.value)}
-              placeholder="Enter the table of contents (optional)"
-              disabled={isLoading}
-              rows={6}
-            />
-          </div>
+              <div className="form-group">
+                <label htmlFor="title">
+                  Book Title <span className="required">*</span>
+                </label>
+                <input
+                  id="title"
+                  type="text"
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  placeholder="Enter the book title"
+                  disabled={isLoading}
+                  autoComplete="off"
+                  autoFocus
+                />
+              </div>
 
-          <div className="form-group">
-            <label htmlFor="language">
-              Language <span className="required">*</span>
-            </label>
-            <select
-              id="language"
-              value={language}
-              onChange={(e) => setLanguage(e.target.value)}
-              disabled={isLoading}
-            >
-              {LANGUAGES.map((lang) => (
-                <option key={lang.value} value={lang.value}>
-                  {lang.label}
-                </option>
-              ))}
-            </select>
-          </div>
+              <div className="form-group">
+                <label htmlFor="tableOfContents">Table of Contents (Optional)</label>
+                <textarea
+                  id="tableOfContents"
+                  value={tableOfContents}
+                  onChange={(e) => setTableOfContents(e.target.value)}
+                  placeholder="Enter the table of contents (optional)"
+                  disabled={isLoading}
+                  rows={6}
+                />
+              </div>
 
-          <button
-            type="submit"
-            className="generate-button"
-            disabled={isLoading}
-          >
-            {isLoading ? 'Generating Titles...' : 'Generate Titles'}
-          </button>
-        </form>
+              <div className="form-group">
+                <label htmlFor="language">
+                  Language <span className="required">*</span>
+                </label>
+                <select
+                  id="language"
+                  value={language}
+                  onChange={(e) => setLanguage(e.target.value)}
+                  disabled={isLoading}
+                >
+                  {LANGUAGES.map((lang) => (
+                    <option key={lang.value} value={lang.value}>
+                      {lang.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
 
-        {titles.length > 0 && (
+              <button
+                type="submit"
+                className="generate-button"
+                disabled={isLoading}
+              >
+                {isLoading ? 'Generating Titles...' : 'Generate Titles'}
+              </button>
+            </form>
+          </>
+        ) : (
           <div className="results-section">
-            <h2>Select Titles</h2>
-            <p className="section-description">
-              Select the titles you want to use. All titles are selected by default.
-            </p>
+            <div className="page-header">
+              <h1>Select Titles</h1>
+              <p>Choose the titles you want to use for generation</p>
+            </div>
+
+            <div className="selection-count-badge">
+              <span className="selection-count-text">
+                {selectedTitles.length} of {titles.length} {selectedTitles.length === 1 ? 'title' : 'titles'} selected
+              </span>
+            </div>
+
+            {displayError && (
+              <div className="error-message" role="alert">
+                {displayError}
+              </div>
+            )}
+
             <div className="titles-list">
               {titles.map((generatedTitle, index) => (
                 <div key={index} className="title-item">
@@ -252,6 +274,16 @@ export const TitleGenerationPage = () => {
                   Please select at least one title to start generation
                 </p>
               )}
+            </div>
+
+            <div className="back-to-form-section">
+              <button
+                type="button"
+                onClick={handleBackToForm}
+                className="back-to-form-button"
+              >
+                Generate New Titles
+              </button>
             </div>
           </div>
         )}

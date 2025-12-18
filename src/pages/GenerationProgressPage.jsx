@@ -156,15 +156,15 @@ export const GenerationProgressPage = () => {
   const getStatusColor = (status) => {
     switch (status) {
       case 'pending':
-        return '#fbbf24';
+        return '#737373';
       case 'running':
-        return '#3b82f6';
+        return '#525252';
       case 'completed':
-        return '#10b981';
+        return '#404040';
       case 'failed':
-        return '#ef4444';
+        return '#262626';
       default:
-        return '#6b7280';
+        return '#737373';
     }
   };
 
