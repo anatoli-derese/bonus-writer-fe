@@ -35,13 +35,13 @@ export const generateTitles = createAsyncThunk(
 // Start book generation async thunk
 export const startBookGeneration = createAsyncThunk(
   'title/startBookGeneration',
-  async ({ titles, bookTitle, tableOfContents, language }, { rejectWithValue }) => {
+  async ({ titles, bookTitle, tableOfContents, languages }, { rejectWithValue }) => {
     try {
       const response = await bookService.startGeneration(
         titles,
         bookTitle,
         tableOfContents,
-        language
+        languages
       );
       return response;
     } catch (error) {

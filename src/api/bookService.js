@@ -10,15 +10,15 @@ export const bookService = {
    * @param {string[]} titles - Selected titles array
    * @param {string} bookTitle - Book title
    * @param {string|null} tableOfContents - Table of contents (optional)
-   * @param {string} language - Language code (en, es, fr, de, it)
+   * @param {string[]} languages - Language codes array (e.g., ['en', 'es', 'fr'])
    * @returns {Promise<{job_id: string}>}
    */
-  async startGeneration(titles, bookTitle, tableOfContents = null, language = 'en') {
+  async startGeneration(titles, bookTitle, tableOfContents = null, languages = ['en']) {
     return apiClient.post(API_ENDPOINTS.START_GENERATE, {
       titles,
       book_title: bookTitle,
       table_of_contents: tableOfContents,
-      language,
+      languages,
     });
   },
 };

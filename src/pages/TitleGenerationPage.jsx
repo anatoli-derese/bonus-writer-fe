@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
 import { 
@@ -24,8 +24,10 @@ export const TitleGenerationPage = () => {
   const [title, setTitle] = useState('');
   const [tableOfContents, setTableOfContents] = useState('');
   const [language, setLanguage] = useState('en');
+  const [selectedLanguages, setSelectedLanguages] = useState(['en']); // For generation - multiple languages
   const [localError, setLocalError] = useState('');
   const [customTitle, setCustomTitle] = useState('');
+  const languagesInitializedRef = useRef(false);
 
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
@@ -49,6 +51,19 @@ export const TitleGenerationPage = () => {
   useEffect(() => {
     dispatch(clearTitles());
   }, [dispatch]);
+
+  // Initialize selected languages with the initial language when titles are first generated
+  useEffect(() => {
+    if (titles.length > 0 && !languagesInitializedRef.current) {
+      // When titles are first generated, set selected languages to the language used for generation
+      setSelectedLanguages([language]);
+      languagesInitializedRef.current = true;
+    } else if (titles.length === 0) {
+      // Reset when titles are cleared
+      languagesInitializedRef.current = false;
+      setSelectedLanguages([language]);
+    }
+  }, [titles.length, language]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -94,10 +109,32 @@ export const TitleGenerationPage = () => {
     return selectedTitles.includes(titleToCheck);
   };
 
+  const handleToggleLanguage = (langCode) => {
+    setSelectedLanguages((prev) => {
+      if (prev.includes(langCode)) {
+        // If already selected, remove it (but ensure at least one is selected)
+        const filtered = prev.filter((l) => l !== langCode);
+        return filtered.length > 0 ? filtered : prev;
+      } else {
+        // Add the language
+        return [...prev, langCode];
+      }
+    });
+  };
+
+  const isLanguageSelected = (langCode) => {
+    return selectedLanguages.includes(langCode);
+  };
+
   const handleStartGeneration = async () => {
     // Validation
     if (selectedTitles.length === 0) {
       setLocalError('Please select at least one title to generate');
+      return;
+    }
+
+    if (selectedLanguages.length === 0) {
+      setLocalError('Please select at least one language for generation');
       return;
     }
 
@@ -114,7 +151,7 @@ export const TitleGenerationPage = () => {
         titles: selectedTitles,
         bookTitle: title.trim(),
         tableOfContents: tableOfContents.trim() || null,
-        language,
+        languages: selectedLanguages,
       })
     );
 
@@ -130,6 +167,7 @@ export const TitleGenerationPage = () => {
 
   const handleBackToForm = () => {
     dispatch(clearTitles());
+    setSelectedLanguages([language]); // Reset to initial language
     setLocalError('');
     dispatch(clearError());
   };
@@ -260,18 +298,51 @@ export const TitleGenerationPage = () => {
               </form>
             </div>
 
+            <div className="languages-selection-section">
+              <h3>Select Languages</h3>
+              <p className="section-description">
+                Choose the languages you want to generate bonuses in
+              </p>
+              <div className="languages-list">
+                {LANGUAGES.map((lang) => (
+                  <div key={lang.value} className="language-item">
+                    <label className="language-checkbox-label">
+                      <input
+                        type="checkbox"
+                        checked={isLanguageSelected(lang.value)}
+                        onChange={() => handleToggleLanguage(lang.value)}
+                        className="language-checkbox"
+                        disabled={selectedLanguages.length === 1 && isLanguageSelected(lang.value)}
+                      />
+                      <span className="language-text">{lang.label}</span>
+                    </label>
+                  </div>
+                ))}
+              </div>
+              {selectedLanguages.length === 0 && (
+                <p className="selection-hint" style={{ color: '#ef4444', marginTop: '8px' }}>
+                  At least one language must be selected
+                </p>
+              )}
+            </div>
+
             <div className="start-generation-section">
               <button
                 type="button"
                 onClick={handleStartGeneration}
                 className="start-generation-button"
-                disabled={isGenerating || selectedTitles.length === 0}
+                disabled={isGenerating || selectedTitles.length === 0 || selectedLanguages.length === 0}
               >
                 {isGenerating ? 'Starting Generation...' : 'Start Generation'}
               </button>
               {selectedTitles.length === 0 && (
                 <p className="selection-hint">
                   Please select at least one title to start generation
+                </p>
+              )}
+              {selectedTitles.length > 0 && selectedLanguages.length === 0 && (
+                <p className="selection-hint">
+                  Please select at least one language to start generation
                 </p>
               )}
             </div>
