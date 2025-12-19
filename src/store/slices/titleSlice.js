@@ -101,8 +101,7 @@ const titleSlice = createSlice({
         state.isLoading = false;
         const newTitles = action.payload.titles || [];
         state.titles = newTitles;
-        // Select all generated titles by default
-        state.selectedTitles = [...newTitles];
+        state.selectedTitles = [];
         state.error = null;
       })
       .addCase(generateTitles.rejected, (state, action) => {
