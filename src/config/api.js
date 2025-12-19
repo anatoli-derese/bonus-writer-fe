@@ -13,5 +13,6 @@ export const API_ENDPOINTS = {
   GET_HISTORY: '/get-history',
   DOWNLOAD: '/download',
   DOWNLOAD_FILE: '/download-file',
+  TRANSLATE_TEXT: '/translate-text',
 };
 

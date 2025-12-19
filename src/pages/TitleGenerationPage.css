@@ -2,16 +2,24 @@
   min-height: calc(100vh - 80px);
   background: var(--color-off-white);
   padding: var(--spacing-lg);
+  box-sizing: border-box;
+}
+
+.title-generation-container.has-titles .title-generation-card {
+  max-width: 100%;
+  width: 100%;
 }
 
 .title-generation-card {
   max-width: 800px;
+  width: 100%;
   margin: 0 auto;
   background: var(--color-white);
   border-radius: var(--border-radius-lg);
   box-shadow: var(--shadow-md);
   border: var(--border-width) solid var(--border-color);
   padding: var(--spacing-2xl);
+  box-sizing: border-box;
 }
 
 .page-header {
@@ -139,7 +147,8 @@
 }
 
 .results-section {
-  /* Results section is now the main content when titles are generated */
+  display: flex;
+  flex-direction: column;
 }
 
 .selection-count-badge {
@@ -172,24 +181,69 @@
   font-size: 14px;
 }
 
+.titles-columns-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: var(--spacing-lg);
+  margin-bottom: var(--spacing-xl);
+  width: 100%;
+}
+
+.title-column {
+  display: flex;
+  flex-direction: column;
+  background: var(--color-light-gray);
+  border: var(--border-width) solid var(--border-color);
+  border-radius: var(--border-radius-md);
+  padding: var(--spacing-md);
+}
+
+.title-column-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--spacing-md);
+  padding-bottom: var(--spacing-sm);
+  border-bottom: var(--border-width) solid var(--border-color);
+}
+
+.title-column-header h3 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--color-gray-900);
+}
+
+.title-count-badge {
+  font-size: 12px;
+  color: var(--color-gray-600);
+  background: var(--color-white);
+  padding: 2px 8px;
+  border-radius: var(--border-radius-sm);
+}
+
 .titles-list {
   display: flex;
   flex-direction: column;
   gap: var(--spacing-sm);
-  margin-bottom: var(--spacing-xl);
 }
 
 .title-item {
   padding: var(--spacing-md);
-  background: var(--color-light-gray);
+  background: var(--color-white);
   border: var(--border-width) solid var(--border-color);
   border-radius: var(--border-radius-md);
   transition: background-color 0.15s ease, border-color 0.15s ease;
 }
 
 .title-item:hover {
-  background: var(--color-gray-100);
+  background: var(--color-gray-50);
   border-color: var(--color-gray-300);
+}
+
+.title-item:has(input:checked) {
+  background: var(--color-accent-light, rgba(59, 130, 246, 0.1));
+  border-color: var(--color-accent);
 }
 
 .title-checkbox-label {
@@ -299,6 +353,29 @@
   align-items: stretch;
 }
 
+.custom-title-language-select {
+  padding: var(--spacing-sm) var(--spacing-md);
+  border: var(--border-width) solid var(--border-color);
+  border-radius: var(--border-radius-md);
+  font-size: 16px;
+  transition: border-color 0.15s ease;
+  background: var(--color-white);
+  color: var(--color-gray-900);
+  font-family: inherit;
+  cursor: pointer;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23737373' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  padding-right: 36px;
+  min-width: 120px;
+}
+
+.custom-title-language-select:focus {
+  outline: none;
+  border-color: var(--color-accent);
+}
+
 .custom-title-input {
   flex: 1;
   padding: var(--spacing-sm) var(--spacing-md);
@@ -333,12 +410,18 @@
   white-space: nowrap;
 }
 
-.add-title-button:hover {
+.add-title-button:hover:not(:disabled) {
   background: var(--color-gray-600);
 }
 
-.add-title-button:active {
+.add-title-button:active:not(:disabled) {
   background: var(--color-gray-800);
+}
+
+.add-title-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  background: var(--color-gray-500);
 }
 
 .start-generation-section {
@@ -412,7 +495,7 @@
 
 @media (max-width: 768px) {
   .title-generation-card {
-    padding: var(--spacing-xl) var(--spacing-lg);
+    padding: var(--spacing-lg);
   }
 
   .page-header h1 {
@@ -421,5 +504,10 @@
 
   .results-section h2 {
     font-size: 20px;
+  }
+
+  .titles-columns-container {
+    grid-template-columns: 1fr;
+    gap: var(--spacing-sm);
   }
 }

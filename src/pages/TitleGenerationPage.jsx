@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
 import { 
@@ -6,7 +6,7 @@ import {
   clearError, 
   clearTitles,
   toggleTitleSelection, 
-  addCustomTitle,
+  addCustomTitleWithTranslation,
   startBookGeneration
 } from '../store/slices/titleSlice';
 import { setJobId } from '../store/slices/generationSlice';
@@ -23,17 +23,17 @@ const LANGUAGES = [
 export const TitleGenerationPage = () => {
   const [title, setTitle] = useState('');
   const [tableOfContents, setTableOfContents] = useState('');
-  const [language, setLanguage] = useState('en');
-  const [selectedLanguages, setSelectedLanguages] = useState(['en']); // For generation - multiple languages
+  const [selectedLanguages, setSelectedLanguages] = useState([]); // Languages for title generation - start with none selected
   const [localError, setLocalError] = useState('');
   const [customTitle, setCustomTitle] = useState('');
-  const languagesInitializedRef = useRef(false);
+  const [customTitleLanguage, setCustomTitleLanguage] = useState('en');
 
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
   const { 
-    titles, 
-    selectedTitles, 
+    titlesByLanguage, 
+    selectedIndices, 
+    languages,
     isLoading, 
     isGenerating,
     generationError,
@@ -52,18 +52,21 @@ export const TitleGenerationPage = () => {
     dispatch(clearTitles());
   }, [dispatch]);
 
-  // Initialize selected languages with the initial language when titles are first generated
-  useEffect(() => {
-    if (titles.length > 0 && !languagesInitializedRef.current) {
-      // When titles are first generated, set selected languages to the language used for generation
-      setSelectedLanguages([language]);
-      languagesInitializedRef.current = true;
-    } else if (titles.length === 0) {
-      // Reset when titles are cleared
-      languagesInitializedRef.current = false;
-      setSelectedLanguages([language]);
-    }
-  }, [titles.length, language]);
+  const handleToggleLanguage = (langCode) => {
+    setSelectedLanguages((prev) => {
+      if (prev.includes(langCode)) {
+        // If already selected, remove it (allow deselecting all)
+        return prev.filter((l) => l !== langCode);
+      } else {
+        // Add the language
+        return [...prev, langCode];
+      }
+    });
+  };
+
+  const isLanguageSelected = (langCode) => {
+    return selectedLanguages.includes(langCode);
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -76,11 +79,16 @@ export const TitleGenerationPage = () => {
       return;
     }
 
+    if (selectedLanguages.length === 0) {
+      setLocalError('Please select at least one language');
+      return;
+    }
+
     const result = await dispatch(
       generateTitles({
         title: title.trim(),
         tableOfContents: tableOfContents.trim() || null,
-        language,
+        languages: selectedLanguages,
       })
     );
 
@@ -89,11 +97,11 @@ export const TitleGenerationPage = () => {
     }
   };
 
-  const handleToggleTitle = (titleToToggle) => {
-    dispatch(toggleTitleSelection(titleToToggle));
+  const handleToggleTitle = (index) => {
+    dispatch(toggleTitleSelection(index));
   };
 
-  const handleAddCustomTitle = (e) => {
+  const handleAddCustomTitle = async (e) => {
     e.preventDefault();
     const trimmedTitle = customTitle.trim();
     
@@ -101,40 +109,36 @@ export const TitleGenerationPage = () => {
       return;
     }
 
-    dispatch(addCustomTitle(trimmedTitle));
-    setCustomTitle(''); // Clear input after adding
+    if (!languages || languages.length === 0) {
+      setLocalError('No languages available. Please generate titles first.');
+      return;
+    }
+
+    setLocalError('');
+    dispatch(clearError());
+
+    const result = await dispatch(
+      addCustomTitleWithTranslation({
+        title: trimmedTitle,
+        fromLanguage: customTitleLanguage,
+        languages: languages,
+      })
+    );
+
+    if (addCustomTitleWithTranslation.fulfilled.match(result)) {
+      setCustomTitle(''); // Clear input after adding
+    }
+    // Error is already set in Redux state if rejected
   };
 
-  const isTitleSelected = (titleToCheck) => {
-    return selectedTitles.includes(titleToCheck);
-  };
-
-  const handleToggleLanguage = (langCode) => {
-    setSelectedLanguages((prev) => {
-      if (prev.includes(langCode)) {
-        // If already selected, remove it (but ensure at least one is selected)
-        const filtered = prev.filter((l) => l !== langCode);
-        return filtered.length > 0 ? filtered : prev;
-      } else {
-        // Add the language
-        return [...prev, langCode];
-      }
-    });
-  };
-
-  const isLanguageSelected = (langCode) => {
-    return selectedLanguages.includes(langCode);
+  const isTitleSelected = (index) => {
+    return selectedIndices.includes(index);
   };
 
   const handleStartGeneration = async () => {
     // Validation
-    if (selectedTitles.length === 0) {
+    if (selectedIndices.length === 0) {
       setLocalError('Please select at least one title to generate');
-      return;
-    }
-
-    if (selectedLanguages.length === 0) {
-      setLocalError('Please select at least one language for generation');
       return;
     }
 
@@ -146,12 +150,22 @@ export const TitleGenerationPage = () => {
     setLocalError('');
     dispatch(clearError());
 
+    // Build titles_by_language object with only selected titles
+    const selectedTitlesByLanguage = {};
+    languages.forEach((lang) => {
+      if (titlesByLanguage[lang]) {
+        selectedTitlesByLanguage[lang] = selectedIndices
+          .map((index) => titlesByLanguage[lang][index])
+          .filter((title) => title !== undefined);
+      }
+    });
+
     const result = await dispatch(
       startBookGeneration({
-        titles: selectedTitles,
+        titlesByLanguage: selectedTitlesByLanguage,
         bookTitle: title.trim(),
         tableOfContents: tableOfContents.trim() || null,
-        languages: selectedLanguages,
+        languages: languages, // Use languages from title generation
       })
     );
 
@@ -167,16 +181,20 @@ export const TitleGenerationPage = () => {
 
   const handleBackToForm = () => {
     dispatch(clearTitles());
-    setSelectedLanguages([language]); // Reset to initial language
     setLocalError('');
     dispatch(clearError());
   };
 
   const displayError = localError || error || generationError;
-  const hasTitles = titles.length > 0;
+  const hasTitles = Object.keys(titlesByLanguage).length > 0;
+  
+  // Get the maximum number of titles across all languages
+  const maxTitleCount = hasTitles 
+    ? Math.max(...Object.values(titlesByLanguage).map(arr => arr.length), 0)
+    : 0;
 
   return (
-    <div className="title-generation-container">
+    <div className={`title-generation-container ${hasTitles ? 'has-titles' : ''}`}>
       <div className="title-generation-card">
         {!hasTitles ? (
           <>
@@ -221,42 +239,54 @@ export const TitleGenerationPage = () => {
               </div>
 
               <div className="form-group">
-                <label htmlFor="language">
-                  Language <span className="required">*</span>
+                <label>
+                  Select Languages <span className="required">*</span>
                 </label>
-                <select
-                  id="language"
-                  value={language}
-                  onChange={(e) => setLanguage(e.target.value)}
-                  disabled={isLoading}
-                >
+                <p className="section-description" style={{ marginTop: '4px', marginBottom: '12px' }}>
+                  Choose the languages you want to generate titles and bonuses in
+                </p>
+                <div className="languages-list">
                   {LANGUAGES.map((lang) => (
-                    <option key={lang.value} value={lang.value}>
-                      {lang.label}
-                    </option>
+                    <div key={lang.value} className="language-item">
+                      <label className="language-checkbox-label">
+                        <input
+                          type="checkbox"
+                          checked={isLanguageSelected(lang.value)}
+                          onChange={() => handleToggleLanguage(lang.value)}
+                          className="language-checkbox"
+                        />
+                        <span className="language-text">{lang.label}</span>
+                      </label>
+                    </div>
                   ))}
-                </select>
+                </div>
+
               </div>
 
               <button
                 type="submit"
                 className="generate-button"
-                disabled={isLoading}
+                disabled={isLoading || selectedLanguages.length === 0}
               >
                 {isLoading ? 'Generating Titles...' : 'Generate Titles'}
               </button>
+              {selectedLanguages.length === 0 && (
+                <p className="selection-hint" style={{ marginTop: '8px', textAlign: 'center', color: '#ef4444' }}>
+                  Please choose at least one language
+                </p>
+              )}
             </form>
           </>
         ) : (
           <div className="results-section">
             <div className="page-header">
               <h1>Select Titles</h1>
-              <p>Choose the titles you want to use for generation</p>
+              <p>Choose the titles you want to use for generation. Titles are synchronized across languages.</p>
             </div>
 
             <div className="selection-count-badge">
               <span className="selection-count-text">
-                {selectedTitles.length} of {titles.length} {selectedTitles.length === 1 ? 'title' : 'titles'} selected
+                {selectedIndices.length} of {maxTitleCount} {selectedIndices.length === 1 ? 'title' : 'titles'} selected
               </span>
             </div>
 
@@ -266,64 +296,80 @@ export const TitleGenerationPage = () => {
               </div>
             )}
 
-            <div className="titles-list">
-              {titles.map((generatedTitle, index) => (
-                <div key={index} className="title-item">
-                  <label className="title-checkbox-label">
-                    <input
-                      type="checkbox"
-                      checked={isTitleSelected(generatedTitle)}
-                      onChange={() => handleToggleTitle(generatedTitle)}
-                      className="title-checkbox"
-                    />
-                    <span className="title-text">{generatedTitle}</span>
-                  </label>
-                </div>
-              ))}
+            {/* Titles displayed in columns by language */}
+            <div className="titles-columns-container">
+              {languages.map((lang) => {
+                const langLabel = LANGUAGES.find(l => l.value === lang)?.label || lang;
+                const titles = titlesByLanguage[lang] || [];
+                
+                return (
+                  <div key={lang} className="title-column">
+                    <div className="title-column-header">
+                      <h3>{langLabel}</h3>
+                      <span className="title-count-badge">{titles.length} titles</span>
+                    </div>
+                    <div className="titles-list">
+                      {Array.from({ length: maxTitleCount }, (_, index) => {
+                        const title = titles[index];
+                        const isSelected = isTitleSelected(index);
+                        
+                        return (
+                          <div key={index} className="title-item">
+                            <label className="title-checkbox-label">
+                              <input
+                                type="checkbox"
+                                checked={isSelected}
+                                onChange={() => handleToggleTitle(index)}
+                                className="title-checkbox"
+                                disabled={!title}
+                              />
+                              <span className="title-text">
+                                {title || <span style={{ color: '#ccc', fontStyle: 'italic' }}>No title</span>}
+                              </span>
+                            </label>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                );
+              })}
             </div>
 
             <div className="add-custom-title-section">
               <h3>Add Custom Title</h3>
               <form onSubmit={handleAddCustomTitle} className="custom-title-form">
+                <select
+                  value={customTitleLanguage}
+                  onChange={(e) => setCustomTitleLanguage(e.target.value)}
+                  className="custom-title-language-select"
+                  disabled={isLoading}
+                >
+                  {languages.map((lang) => {
+                    const langLabel = LANGUAGES.find(l => l.value === lang)?.label || lang;
+                    return (
+                      <option key={lang} value={lang}>
+                        {langLabel}
+                      </option>
+                    );
+                  })}
+                </select>
                 <input
                   type="text"
                   value={customTitle}
                   onChange={(e) => setCustomTitle(e.target.value)}
                   placeholder="Enter a custom title"
                   className="custom-title-input"
+                  disabled={isLoading}
                 />
-                <button type="submit" className="add-title-button">
-                  Add
+                <button 
+                  type="submit" 
+                  className="add-title-button"
+                  disabled={isLoading || !customTitle.trim()}
+                >
+                  {isLoading ? 'Translating...' : 'Add'}
                 </button>
               </form>
-            </div>
-
-            <div className="languages-selection-section">
-              <h3>Select Languages</h3>
-              <p className="section-description">
-                Choose the languages you want to generate bonuses in
-              </p>
-              <div className="languages-list">
-                {LANGUAGES.map((lang) => (
-                  <div key={lang.value} className="language-item">
-                    <label className="language-checkbox-label">
-                      <input
-                        type="checkbox"
-                        checked={isLanguageSelected(lang.value)}
-                        onChange={() => handleToggleLanguage(lang.value)}
-                        className="language-checkbox"
-                        disabled={selectedLanguages.length === 1 && isLanguageSelected(lang.value)}
-                      />
-                      <span className="language-text">{lang.label}</span>
-                    </label>
-                  </div>
-                ))}
-              </div>
-              {selectedLanguages.length === 0 && (
-                <p className="selection-hint" style={{ color: '#ef4444', marginTop: '8px' }}>
-                  At least one language must be selected
-                </p>
-              )}
             </div>
 
             <div className="start-generation-section">
@@ -331,18 +377,13 @@ export const TitleGenerationPage = () => {
                 type="button"
                 onClick={handleStartGeneration}
                 className="start-generation-button"
-                disabled={isGenerating || selectedTitles.length === 0 || selectedLanguages.length === 0}
+                disabled={isGenerating || selectedIndices.length === 0}
               >
                 {isGenerating ? 'Starting Generation...' : 'Start Generation'}
               </button>
-              {selectedTitles.length === 0 && (
+              {selectedIndices.length === 0 && (
                 <p className="selection-hint">
                   Please select at least one title to start generation
-                </p>
-              )}
-              {selectedTitles.length > 0 && selectedLanguages.length === 0 && (
-                <p className="selection-hint">
-                  Please select at least one language to start generation
                 </p>
               )}
             </div>
@@ -362,4 +403,3 @@ export const TitleGenerationPage = () => {
     </div>
   );
 };
-
