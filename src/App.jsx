@@ -8,6 +8,7 @@ import { DashboardPage } from './pages/DashboardPage';
 import { TitleGenerationPage } from './pages/TitleGenerationPage';
 import { GenerationProgressPage } from './pages/GenerationProgressPage';
 import { HistoryPage } from './pages/HistoryPage';
+import { SettingsPage } from './pages/SettingsPage';
 import './App.css';
 
 function App() {
@@ -52,6 +53,16 @@ function App() {
               <ProtectedRoute>
                 <Layout>
                   <DashboardPage />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/settings"
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <SettingsPage />
                 </Layout>
               </ProtectedRoute>
             }

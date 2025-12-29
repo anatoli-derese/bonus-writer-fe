@@ -80,6 +80,47 @@
   color: var(--color-gray-400);
 }
 
+.password-input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.password-input-wrapper input {
+  padding-right: 45px;
+  width: 100%;
+}
+
+.password-toggle {
+  position: absolute;
+  right: var(--spacing-sm);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: var(--spacing-xs);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-gray-500);
+  transition: color 0.15s ease;
+  border-radius: var(--border-radius-sm);
+}
+
+.password-toggle:hover:not(:disabled) {
+  color: var(--color-gray-700);
+  background: var(--color-light-gray);
+}
+
+.password-toggle:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.password-toggle:focus {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
 .error-message {
   padding: var(--spacing-sm) var(--spacing-md);
   background: var(--color-error-bg);
