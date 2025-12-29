@@ -24,6 +24,10 @@ export const Header = () => {
     navigate('/history');
   };
 
+  const handleSettings = () => {
+    navigate('/settings');
+  };
+
   return (
     <header className="app-header">
       <div className="header-container">
@@ -36,6 +40,9 @@ export const Header = () => {
           </button>
           <button onClick={handleHistory} className="header-button">
             📚 History
+          </button>
+          <button onClick={handleSettings} className="header-button">
+            ⚙️ Settings
           </button>
           <button onClick={handleLogout} className="header-button logout-button">
             🚪 Logout

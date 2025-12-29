@@ -6,6 +6,7 @@ export const API_ENDPOINTS = {
   AUTH: {
     LOGIN: '/auth/login',
     REGISTER: '/auth/register',
+    CHANGE_PASSWORD: '/auth/change-password',
   },
   GENERATE_TITLES: '/generate-titles',
   START_GENERATE: '/start-generate',

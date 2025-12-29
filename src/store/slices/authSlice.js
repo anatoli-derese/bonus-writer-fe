@@ -6,6 +6,9 @@ const initialState = {
   isAuthenticated: false,
   isLoading: true,
   error: null,
+  changePasswordLoading: false,
+  changePasswordError: null,
+  changePasswordSuccess: false,
 };
 
 // Check authentication status on app load
@@ -39,6 +42,21 @@ export const logoutUser = createAsyncThunk(
   }
 );
 
+// Change password async thunk
+export const changePassword = createAsyncThunk(
+  'auth/changePassword',
+  async ({ oldPassword, newPassword }, { rejectWithValue }) => {
+    try {
+      const response = await authService.changePassword(oldPassword, newPassword);
+      return response;
+    } catch (error) {
+      return rejectWithValue(
+        error.message || 'Failed to change password. Please try again.'
+      );
+    }
+  }
+);
+
 // Auth slice
 const authSlice = createSlice({
   name: 'auth',
@@ -46,6 +64,12 @@ const authSlice = createSlice({
   reducers: {
     clearError: (state) => {
       state.error = null;
+    },
+    clearChangePasswordError: (state) => {
+      state.changePasswordError = null;
+    },
+    clearChangePasswordSuccess: (state) => {
+      state.changePasswordSuccess = false;
     },
   },
   extraReducers: (builder) => {
@@ -87,9 +111,27 @@ const authSlice = createSlice({
         state.isAuthenticated = false;
         state.error = null;
       });
+
+    // Change password
+    builder
+      .addCase(changePassword.pending, (state) => {
+        state.changePasswordLoading = true;
+        state.changePasswordError = null;
+        state.changePasswordSuccess = false;
+      })
+      .addCase(changePassword.fulfilled, (state) => {
+        state.changePasswordLoading = false;
+        state.changePasswordError = null;
+        state.changePasswordSuccess = true;
+      })
+      .addCase(changePassword.rejected, (state, action) => {
+        state.changePasswordLoading = false;
+        state.changePasswordError = action.payload;
+        state.changePasswordSuccess = false;
+      });
   },
 });
 
-export const { clearError } = authSlice.actions;
+export const { clearError, clearChangePasswordError, clearChangePasswordSuccess } = authSlice.actions;
 export default authSlice.reducer;
 

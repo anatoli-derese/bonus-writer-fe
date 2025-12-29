@@ -48,5 +48,20 @@ export const authService = {
   getToken() {
     return tokenStorage.get();
   },
+
+  /**
+   * Change user password
+   * @param {string} oldPassword
+   * @param {string} newPassword
+   * @returns {Promise<any>}
+   */
+  async changePassword(oldPassword, newPassword) {
+    const response = await apiClient.post(API_ENDPOINTS.AUTH.CHANGE_PASSWORD, {
+      old_password: oldPassword,
+      new_password: newPassword,
+    });
+
+    return response;
+  },
 };
 
