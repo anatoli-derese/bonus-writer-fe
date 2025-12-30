@@ -51,12 +51,14 @@ export const authService = {
 
   /**
    * Change user password
+   * @param {string} adminKey
    * @param {string} oldPassword
    * @param {string} newPassword
    * @returns {Promise<any>}
    */
-  async changePassword(oldPassword, newPassword) {
+  async changePassword(adminKey, oldPassword, newPassword) {
     const response = await apiClient.post(API_ENDPOINTS.AUTH.CHANGE_PASSWORD, {
+      admin_key: adminKey,
       old_password: oldPassword,
       new_password: newPassword,
     });

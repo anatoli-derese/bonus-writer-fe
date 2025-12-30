@@ -45,9 +45,9 @@ export const logoutUser = createAsyncThunk(
 // Change password async thunk
 export const changePassword = createAsyncThunk(
   'auth/changePassword',
-  async ({ oldPassword, newPassword }, { rejectWithValue }) => {
+  async ({ adminKey, oldPassword, newPassword }, { rejectWithValue }) => {
     try {
-      const response = await authService.changePassword(oldPassword, newPassword);
+      const response = await authService.changePassword(adminKey, oldPassword, newPassword);
       return response;
     } catch (error) {
       return rejectWithValue(
