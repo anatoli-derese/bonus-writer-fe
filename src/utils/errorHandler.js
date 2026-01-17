@@ -25,8 +25,8 @@ export const parseLLMError = (errorMessage) => {
   if (lowerMessage.includes('invalid api key') || lowerMessage.includes('authentication')) {
     type = 'authentication';
     userMessage = provider 
-      ? `Your ${provider} API key is invalid. Please contact admin to update it.`
-      : 'Your API key is invalid. Please contact admin.';
+      ? `Your ${provider} API key is invalid.`
+      : 'Your API key is invalid.';
   } else if (lowerMessage.includes('rate limit')) {
     type = 'rate_limit';
     userMessage = provider
@@ -66,7 +66,7 @@ export const getUserFriendlyError = (status, detail) => {
   // Check for specific error messages
   if (detail.includes('does not have an API key configured') || 
       detail.includes('API key configured')) {
-    return 'No API key assigned. Please contact admin to assign an API key.';
+    return detail || 'API key configuration error.';
   }
 
   // Handle LLM errors
