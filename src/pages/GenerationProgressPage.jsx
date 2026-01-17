@@ -150,7 +150,9 @@ export const GenerationProgressPage = () => {
   };
 
   const percentage = progress
-    ? Math.round((progress.completed / progress.total) * 100)
+    ? (progress.effective_percentage !== undefined 
+        ? Math.round(progress.effective_percentage)
+        : Math.round((progress.completed / progress.total) * 100))
     : 0;
 
   const getStatusColor = (status) => {
@@ -207,6 +209,12 @@ export const GenerationProgressPage = () => {
                 <div className="status-badge" style={{ backgroundColor: getStatusColor(progress.status) }}>
                   {getStatusLabel(progress.status)}
                 </div>
+
+                {progress.message && (
+                  <div className="progress-message">
+                    {progress.message}
+                  </div>
+                )}
 
                 <div className="progress-info">
                   <div className="progress-stats">
