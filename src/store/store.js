@@ -3,6 +3,8 @@ import authReducer from './slices/authSlice';
 import titleReducer from './slices/titleSlice';
 import generationReducer from './slices/generationSlice';
 import historyReducer from './slices/historySlice';
+import adminReducer from './slices/adminSlice';
+import userReducer from './slices/userSlice';
 
 export const store = configureStore({
   reducer: {
@@ -10,6 +12,8 @@ export const store = configureStore({
     title: titleReducer,
     generation: generationReducer,
     history: historyReducer,
+    admin: adminReducer,
+    user: userReducer,
   },
 });
 

@@ -4,11 +4,11 @@ import { store } from './store/store';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { Layout } from './components/Layout';
 import { LoginPage } from './pages/LoginPage';
-import { DashboardPage } from './pages/DashboardPage';
 import { TitleGenerationPage } from './pages/TitleGenerationPage';
 import { GenerationProgressPage } from './pages/GenerationProgressPage';
 import { HistoryPage } from './pages/HistoryPage';
 import { SettingsPage } from './pages/SettingsPage.jsx';
+import { AdminPanelPage } from './pages/AdminPanelPage';
 import './App.css';
 
 function App() {
@@ -48,21 +48,21 @@ function App() {
             }
           />
           <Route
-            path="/dashboard"
-            element={
-              <ProtectedRoute>
-                <Layout>
-                  <DashboardPage />
-                </Layout>
-              </ProtectedRoute>
-            }
-          />
-          <Route
             path="/settings"
             element={
               <ProtectedRoute>
                 <Layout>
                   <SettingsPage />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin"
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <AdminPanelPage />
                 </Layout>
               </ProtectedRoute>
             }

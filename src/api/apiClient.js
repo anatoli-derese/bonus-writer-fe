@@ -1,5 +1,6 @@
 import { API_BASE_URL } from '../config/api';
 import { tokenStorage } from '../utils/tokenStorage';
+import { getUserFriendlyError } from '../utils/errorHandler';
 
 /**
  * Base API client for making HTTP requests
@@ -37,8 +38,10 @@ class ApiClient {
       const data = await response.json().catch(() => ({}));
 
       if (!response.ok) {
+        const errorDetail = data.detail || data.message || 'An error occurred';
+        const userFriendlyMessage = getUserFriendlyError(response.status, errorDetail);
         throw new ApiError(
-          data.detail || data.message || 'An error occurred',
+          userFriendlyMessage,
           response.status,
           data
         );

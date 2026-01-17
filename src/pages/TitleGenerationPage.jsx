@@ -10,6 +10,8 @@ import {
   startBookGeneration
 } from '../store/slices/titleSlice';
 import { setJobId } from '../store/slices/generationSlice';
+import { fetchCurrentUser } from '../store/slices/userSlice';
+import { ApiKeyStatusBanner } from '../components/ApiKeyStatusBanner';
 import './TitleGenerationPage.css';
 
 const LANGUAGES = [
@@ -39,6 +41,7 @@ export const TitleGenerationPage = () => {
     generationError,
     error 
   } = useAppSelector((state) => state.title);
+  const { hasAPIKey } = useAppSelector((state) => state.user);
 
   // Clear local error when Redux error is cleared
   useEffect(() => {
@@ -50,6 +53,11 @@ export const TitleGenerationPage = () => {
   // Clear titles when component mounts to ensure clean state
   useEffect(() => {
     dispatch(clearTitles());
+  }, [dispatch]);
+
+  // Fetch current user info to check API key status
+  useEffect(() => {
+    dispatch(fetchCurrentUser());
   }, [dispatch]);
 
   const handleToggleLanguage = (langCode) => {
@@ -72,6 +80,12 @@ export const TitleGenerationPage = () => {
     e.preventDefault();
     setLocalError('');
     dispatch(clearError());
+
+    // Check API key status - only block if we're certain they don't have one
+    if (hasAPIKey === false) {
+      setLocalError('No API key assigned. Please contact admin to assign an API key.');
+      return;
+    }
 
     // Validation
     if (!title.trim()) {
@@ -136,6 +150,12 @@ export const TitleGenerationPage = () => {
   };
 
   const handleStartGeneration = async () => {
+    // Check API key status - only block if we're certain they don't have one
+    if (hasAPIKey === false) {
+      setLocalError('No API key assigned. Please contact admin to assign an API key.');
+      return;
+    }
+
     // Validation
     if (selectedIndices.length === 0) {
       setLocalError('Please select at least one title to generate');
@@ -187,6 +207,9 @@ export const TitleGenerationPage = () => {
 
   const displayError = localError || error || generationError;
   const hasTitles = Object.keys(titlesByLanguage).length > 0;
+  // Only show API key warning if we're certain the user doesn't have one (hasAPIKey === false)
+  // If hasAPIKey is undefined, we don't know, so don't show the warning
+  const shouldShowAPIKeyWarning = hasAPIKey === false;
   
   // Get the maximum number of titles across all languages
   const maxTitleCount = hasTitles 
@@ -204,6 +227,7 @@ export const TitleGenerationPage = () => {
             </div>
 
             <form onSubmit={handleSubmit} className="title-form">
+              {shouldShowAPIKeyWarning && <ApiKeyStatusBanner />}
               {displayError && (
                 <div className="error-message" role="alert">
                   {displayError}
@@ -266,7 +290,7 @@ export const TitleGenerationPage = () => {
               <button
                 type="submit"
                 className="generate-button"
-                disabled={isLoading || selectedLanguages.length === 0}
+                disabled={isLoading || selectedLanguages.length === 0 || hasAPIKey === false}
               >
                 {isLoading ? 'Generating Titles...' : 'Generate Titles'}
               </button>
@@ -290,6 +314,7 @@ export const TitleGenerationPage = () => {
               </span>
             </div>
 
+            {shouldShowAPIKeyWarning && <ApiKeyStatusBanner />}
             {displayError && (
               <div className="error-message" role="alert">
                 {displayError}
@@ -377,7 +402,7 @@ export const TitleGenerationPage = () => {
                 type="button"
                 onClick={handleStartGeneration}
                 className="start-generation-button"
-                disabled={isGenerating || selectedIndices.length === 0}
+                disabled={isGenerating || selectedIndices.length === 0 || hasAPIKey === false}
               >
                 {isGenerating ? 'Starting Generation...' : 'Start Generation'}
               </button>

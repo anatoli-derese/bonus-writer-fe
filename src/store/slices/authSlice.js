@@ -1,11 +1,13 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import { authService } from '../../api/authService';
+import { getAdminStatusFromToken } from '../../utils/jwtDecoder';
 
 // Initial state
 const initialState = {
   isAuthenticated: false,
   isLoading: true,
   error: null,
+  isAdmin: false,
   changePasswordLoading: false,
   changePasswordError: null,
   changePasswordSuccess: false,
@@ -15,7 +17,10 @@ const initialState = {
 export const checkAuth = createAsyncThunk(
   'auth/checkAuth',
   async () => {
-    return authService.isAuthenticated();
+    const isAuthenticated = authService.isAuthenticated();
+    const token = authService.getToken();
+    const isAdmin = getAdminStatusFromToken(token);
+    return { isAuthenticated, isAdmin };
   }
 );
 
@@ -25,12 +30,23 @@ export const loginUser = createAsyncThunk(
   async ({ username, password }, { rejectWithValue }) => {
     try {
       const response = await authService.login(username, password);
-      return response;
+      // Extract admin status from JWT token
+      const isAdmin = getAdminStatusFromToken(response.access_token);
+      return { ...response, isAdmin };
     } catch (error) {
       return rejectWithValue(
         error.message || 'Login failed. Please check your credentials.'
       );
     }
+  }
+);
+
+// Check admin status async thunk
+export const checkAdminStatus = createAsyncThunk(
+  'auth/checkAdminStatus',
+  async () => {
+    const token = authService.getToken();
+    return getAdminStatusFromToken(token);
   }
 );
 
@@ -79,12 +95,14 @@ const authSlice = createSlice({
         state.isLoading = true;
       })
       .addCase(checkAuth.fulfilled, (state, action) => {
-        state.isAuthenticated = action.payload;
+        state.isAuthenticated = action.payload.isAuthenticated;
+        state.isAdmin = action.payload.isAdmin || false;
         state.isLoading = false;
         state.error = null;
       })
       .addCase(checkAuth.rejected, (state) => {
         state.isAuthenticated = false;
+        state.isAdmin = false;
         state.isLoading = false;
       });
 
@@ -94,21 +112,30 @@ const authSlice = createSlice({
         state.isLoading = true;
         state.error = null;
       })
-      .addCase(loginUser.fulfilled, (state) => {
+      .addCase(loginUser.fulfilled, (state, action) => {
         state.isAuthenticated = true;
+        state.isAdmin = action.payload.isAdmin || false;
         state.isLoading = false;
         state.error = null;
       })
       .addCase(loginUser.rejected, (state, action) => {
         state.isAuthenticated = false;
+        state.isAdmin = false;
         state.isLoading = false;
         state.error = action.payload;
+      });
+
+    // Check admin status
+    builder
+      .addCase(checkAdminStatus.fulfilled, (state, action) => {
+        state.isAdmin = action.payload;
       });
 
     // Logout
     builder
       .addCase(logoutUser.fulfilled, (state) => {
         state.isAuthenticated = false;
+        state.isAdmin = false;
         state.error = null;
       });
 
